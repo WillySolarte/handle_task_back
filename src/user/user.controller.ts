@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Body, Res, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { IConfirmAccountReturn, IUserReturn } from 'src/common/interfaces';
+import { IConfirmAccountReturn, ILoginReturn, IUserReturn } from 'src/common/interfaces';
 import { Response } from 'express';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -32,7 +33,19 @@ export class UserController {
     return  res.status(200).json(result)
   }
 
-  
+  @Post('login')
+  async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
+    
+    const result: ILoginReturn = await this.userService.loginUser(loginUserDto);
+    if(result.state === 'error'){
+      
+      return res.status(409).json(result)
+    }
+    
+    return  res.status(200).json(result)
+  }
+
+
 
   @Get()
   findAll() {

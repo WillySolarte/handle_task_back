@@ -8,3 +8,9 @@ export interface IConfirmAccountReturn {
     state: string
     error: string
 }
+
+export interface ILoginReturn {
+    msg: string
+    state: string,
+    data: string
+}

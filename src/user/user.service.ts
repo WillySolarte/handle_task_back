@@ -11,6 +11,8 @@ import * as bcrypt from 'bcryptjs';
 import { Email } from './providers/email/email';
 import { ISendEmail } from 'src/common/interfaces/sendMail';
 import { UserA } from './schema/userA.schema';
+import { JwtService } from '@nestjs/jwt';
+import { LoginUserDto } from './dto/login-user.dto';
 //import {} from './templates'
 
 @Injectable()
@@ -18,7 +20,8 @@ export class UserService {
 
   constructor(
     @InjectModel(UserA.name) private userAModel: Model<UserA>,
-    private emailProvider: Email
+    private emailProvider: Email,
+    private jwtService: JwtService
 
   ) { }
 
@@ -66,6 +69,28 @@ export class UserService {
       console.log(error)
       return { msg: "Error en la conexión", state: 'error', error };
     }
+  }
+
+  async loginUser({email, password} : LoginUserDto){
+
+    const user = await this.userAModel.findOne({ email });
+
+    if (!user) {
+      return { msg: 'El usuario no esta registrado', state: 'error', data: '' };
+    }
+    if (!user.confirmed) {
+      return { msg: 'El usuario no a confirmado el email', state: 'error', data: '' };
+    }
+    const passwordValid = await bcrypt.compare(password, user.password);
+    if (!passwordValid) {
+      return { msg: 'Contraseña erronea', state: 'error', data: '' };
+    }
+
+    const payload = {email: user.email}
+    const access_token = await this.jwtService.signAsync(payload)
+
+    return { msg: 'Usuario Autenticado', state: 'ok', data: access_token };
+
   }
 
 

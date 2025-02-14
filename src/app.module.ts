@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Email } from './user/providers/email/email';
 import config from './config';
 
+
 @Module({
   imports: [
     UserModule,
@@ -20,6 +21,7 @@ import config from './config';
       }),
       inject: [ConfigService],
     }),
+    
     
   ],
   providers: [Email],
