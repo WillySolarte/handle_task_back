@@ -13,8 +13,9 @@ export class ProjectController {
 
   @UseGuards(UserGuard)
   @Post('new-project')
-  create(@Body() createProjectDto: CreateProjectDto, @Req() req: Request, @Req() request) {
-    const userId = request.user._id;
+  async create(@Req() req,  @Body() createProjectDto: CreateProjectDto) {
+    const userId = await req.user.id;
+    
     return this.projectService.create(createProjectDto, userId);
   }
   
@@ -25,11 +26,15 @@ export class ProjectController {
     
     return this.projectService.findAll(req.user.id);
   }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectService.findOne(+id);
+  
+  @UseGuards(UserGuard)
+  @Get('get-project/:id')
+  async findOne(@Req() req, @Param('id') id: string) {
+    const project = await this.projectService.findOne(id, req.user.id)
+    
+    return project;
   }
+ 
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {

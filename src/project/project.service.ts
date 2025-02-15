@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Project } from './schema/project.schema';
-import { Model } from 'mongoose';
+import { Model, ObjectId, Types } from 'mongoose';
 
 @Injectable()
 export class ProjectService {
@@ -15,8 +15,9 @@ export class ProjectService {
     ) { }
 
   async create(createProjectDto: CreateProjectDto, userId: string) {
+    
     const project = new this.projectModel(createProjectDto);
-    project.manager = new this.projectModel.base.Types.ObjectId(userId);
+    project.manager = new Types.ObjectId(userId);
 
     try {
       await project.save();
@@ -26,17 +27,30 @@ export class ProjectService {
     }
   }
 
-  findAll(userId: string) {
-    return this.projectModel.find({
+  async findAll(userId: string) {
+    const objectId = new Types.ObjectId(userId);
+    const projects = await this.projectModel.find({
       $or: [
-        { manager: userId },
-        { team: userId },
+        { manager: objectId },
+        { team: objectId },
       ],
     }).exec();
+    return projects
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} project`;
+  async findOne(id: string, userId: string) {
+    const project = await this.projectModel.findById(id).populate('task');
+    if (!project) {
+      throw new NotFoundException('Proyecto no encontrado');
+    }
+    const isManager = project.manager.toString() === userId;
+    const isTeamMember = project.team.some(member => member.toString() === userId);
+
+    if (!isManager && !isTeamMember) {
+      throw new UnauthorizedException('Acción no válida');
+    }
+
+    return project;
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {
