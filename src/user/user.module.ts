@@ -16,5 +16,6 @@ import { jwtConstants } from './constants/jwt.constant';
   ],
   controllers: [UserController],
   providers: [UserService, UserA, Email],
+  exports: [UserService],
 })
 export class UserModule {}
