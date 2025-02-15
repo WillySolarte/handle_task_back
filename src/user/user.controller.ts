@@ -1,9 +1,14 @@
-import { Controller, Get, Post, Body, Res, Param } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import { Controller, Get, Post, Body, Res, Param, UseGuards, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { IConfirmAccountReturn, ILoginReturn, IUserReturn } from 'src/common/interfaces';
 import { Response } from 'express';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UserGuard } from './user.guard';
 
 @Controller('user')
 export class UserController {
@@ -43,6 +48,15 @@ export class UserController {
     }
     
     return  res.status(200).json(result)
+  }
+
+  @UseGuards(UserGuard)
+  @Get('user-authenticated')
+  getUserAuthenticated(@Req() req, @Res() res: Response) {
+
+    
+
+    return res.status(200).json({ msg: "Usuario autenticado", state: 'ok', data: req.user }) ;
   }
 
 

@@ -66,7 +66,6 @@ export class UserService {
       return { msg: 'Usuario Confirmado', state: 'ok', error: '' };
       
     } catch (error) {
-      console.log(error)
       return { msg: "Error en la conexión", state: 'error', error };
     }
   }
@@ -90,6 +89,18 @@ export class UserService {
     const access_token = await this.jwtService.signAsync(payload)
 
     return { msg: 'Usuario Autenticado', state: 'ok', data: access_token };
+
+  }
+
+  async findByEmail(email: string){
+
+    const user = await this.userAModel.findOne({ email }) 
+    const result = {
+      name: user?.name,
+      id: user?.id,
+      email: user?.email
+    }
+    return result;
 
   }
 
