@@ -18,7 +18,7 @@ export class Note {
   @Prop({ type: Types.ObjectId, ref: 'UserA', required: true })
   createdBy: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Task', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'TaskB', required: true })
   task: Types.ObjectId;
 }
 

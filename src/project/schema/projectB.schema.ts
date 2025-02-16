@@ -1,20 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, PopulatedDoc, Types } from 'mongoose';
+import { ITaskB } from 'src/task/schema/taskB.schema';
+
+import { IUserA } from 'src/user/schema/userA.schema';
 
 
-export interface IProject {
+export interface IProjectB {
   projectName: string;
   clientName: string;
   description: string;
-  task: Types.ObjectId[];
-  manager: Types.ObjectId;
-  team: Types.ObjectId[];
+  task: PopulatedDoc<ITaskB & Document>[],
+  manager: PopulatedDoc<IUserA & Document>,
+  team: PopulatedDoc<IUserA & Document>[]
 }
 
-export type ProjectDocument = HydratedDocument<IProject>;
+export type ProjectBDocument = HydratedDocument<IProjectB>;
 
 @Schema({ timestamps: true })
-export class Project {
+export class ProjectB {
   @Prop({ required: true, trim: true })
   projectName: string;
 
@@ -24,7 +27,7 @@ export class Project {
   @Prop({ required: true, trim: true })
   description: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'TaskB' }] })
   task: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'UserA', required: true })
@@ -34,4 +37,4 @@ export class Project {
   team: Types.ObjectId[];
 }
 
-export const ProjectSchema = SchemaFactory.createForClass(Project);
+export const ProjectBSchema = SchemaFactory.createForClass(ProjectB);

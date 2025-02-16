@@ -3,21 +3,21 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Project } from './schema/project.schema';
 import { Model, Types } from 'mongoose';
+import { ProjectB } from './schema/projectB.schema';
 
 @Injectable()
 export class ProjectService {
 
   constructor(
-    @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(ProjectB.name) private projectBModel: Model<ProjectB>,
 
 
   ) { }
 
   async create(createProjectDto: CreateProjectDto, userId: string) {
 
-    const project = new this.projectModel(createProjectDto);
+    const project = new this.projectBModel(createProjectDto);
     project.manager = new Types.ObjectId(userId);
 
     try {
@@ -31,7 +31,7 @@ export class ProjectService {
 
   async findAll(userId: string) {
     const objectId = new Types.ObjectId(userId);
-    const projects = await this.projectModel.find({
+    const projects = await this.projectBModel.find({
       $or: [
         { manager: objectId },
         { team: objectId },
@@ -43,18 +43,21 @@ export class ProjectService {
   async findOne(id: string, userId: string) {
 
     try {
-      const project = await this.projectModel.findById(id).populate('task');
+      const project = await this.projectBModel.findById(id).populate({
+        path: 'task',
+        model: 'TaskB' // Asegúrate de que coincida con el nombre registrado en Mongoose
+      });
 
       if (!project) {
         return { msg: 'Proyecto no encontrado', state: 'error', data: '' };
       }
+      
       const isManager = project.manager.toString() === userId;
       const isTeamMember = project.team.some(member => member.toString() === userId);
 
       if (!isManager && !isTeamMember) {
         return { msg: 'Acción no válida', state: 'error', data: '' };
       }
-
       return { msg: 'Proyecto encontrado', state: 'ok', data: project };;
 
     } catch (error) {
@@ -68,7 +71,7 @@ export class ProjectService {
 
     try {
 
-      const project = await this.projectModel.findById(id);
+      const project = await this.projectBModel.findById(id);
 
 
       if (!project) {
@@ -92,7 +95,7 @@ export class ProjectService {
   }
 
   async remove(id: string, userId: string) {
-    const project = await this.projectModel.findById(id);
+    const project = await this.projectBModel.findById(id);
     if (!project) {
       throw new NotFoundException('Proyecto no encontrado');
     }

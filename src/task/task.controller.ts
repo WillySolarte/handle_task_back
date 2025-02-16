@@ -1,18 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, UseGuards, Req } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { IGeneralReturn } from 'src/common/interfaces';
+import { IGeneralReturn, IGetTaskReturn } from 'src/common/interfaces';
 import { Response } from 'express';
+import { UserGuard } from 'src/user/user.guard';
+import { UpdateStatusTaskDto } from './dto/update-status-task.dto';
 
 @Controller('task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @Post('new-task/:projectId')
-  async create(@Param('projectId') projectId: string, @Body() createTaskDto: CreateTaskDto, @Res() res: Response) {
 
-    const result: IGeneralReturn = await this.taskService.create(createTaskDto, projectId);
+  @UseGuards(UserGuard)
+  @Post('new-task/:projectId')
+  async create(@Req() req, @Param('projectId') projectId: string, @Body() createTaskDto: CreateTaskDto, @Res() res: Response) {
+    
+    const userId = req.user.id
+    const result: IGeneralReturn = await this.taskService.create(createTaskDto, projectId, userId);
     if(result.state === 'error'){
       return res.status(401).json(result)
     }
@@ -24,15 +32,40 @@ export class TaskController {
   findAll() {
     return this.taskService.findAll();
   }
+  
+  
+  @Get('get-task/:projectId/:taskId')
+  async findOne(@Param('projectId') projectId: string, @Param('taskId') taskId: string, @Res() res: Response) {
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
+    const result: IGetTaskReturn = await this.taskService.findOne(projectId, taskId)
+    if(result.state === 'error') return  res.status(401).json(result)
+      
+    return res.status(200).json(result) ;
   }
+  
+  @UseGuards(UserGuard)
+  @Post('update-status/:projectId/:taskId')
+  async updateStatus(@Req() req, @Param('projectId') projectId: string, @Param('taskId') taskId: string, @Body() updateStatusTaskDto: UpdateStatusTaskDto, @Res() res: Response){
+    
+    const userId = req.user.id;
+    const result = await this.taskService.updateTaskStatus(updateStatusTaskDto, userId, projectId, taskId)
+    if(result.state === 'error'){
+      return  res.status(401).json(result)
+    } 
+    return res.status(200).json(result)
+  }
+  
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.taskService.update(+id, updateTaskDto);
+  @UseGuards(UserGuard)
+  @Patch('update-task/:projectId/:taskId')
+  async update(@Req() req, @Param('projectId') projectId: string, @Param('taskId') taskId: string, @Body() updateTaskDto: UpdateTaskDto, @Res() res: Response) {
+    
+    const userId = req.user.id;
+    const result = await this.taskService.update(updateTaskDto, projectId, taskId, userId);
+
+    if(result?.state === 'error') return  res.status(401).json(result)
+
+    return res.status(200).json(result)
   }
 
   @Delete(':id')

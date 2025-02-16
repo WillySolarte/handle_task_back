@@ -12,7 +12,7 @@ export const taskStatus = {
 
 export type TaskStatus = typeof taskStatus[keyof typeof taskStatus];
 
-export interface ITask {
+export interface ITaskB {
   name: string;
   description: string;
   project: Types.ObjectId;
@@ -21,17 +21,17 @@ export interface ITask {
   notes: Types.ObjectId[];
 }
 
-export type TaskDocument = HydratedDocument<ITask>;
+export type TaskDocument = HydratedDocument<ITaskB>;
 
 @Schema({ timestamps: true })
-export class Task {
+export class TaskB {
   @Prop({ required: true, trim: true })
   name: string;
 
   @Prop({ required: true, trim: true })
   description: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'ProjectB', required: true })
   project: Types.ObjectId;
 
   @Prop({ type: String, enum: Object.values(taskStatus), default: taskStatus.PENDING })
@@ -49,4 +49,4 @@ export class Task {
   notes: Types.ObjectId[];
 }
 
-export const TaskSchema = SchemaFactory.createForClass(Task);
+export const TaskBSchema = SchemaFactory.createForClass(TaskB);
