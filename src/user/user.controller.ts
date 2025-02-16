@@ -5,10 +5,11 @@
 import { Controller, Get, Post, Body, Res, Param, UseGuards, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { IConfirmAccountReturn, ILoginReturn, IUserReturn } from 'src/common/interfaces';
+import { IConfirmAccountReturn, IGeneralReturn, ILoginReturn, IUserReturn } from 'src/common/interfaces';
 import { Response } from 'express';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UserGuard } from './user.guard';
+import { CheckPasswordDto } from './dto/check-pass.dto';
 
 @Controller('user')
 export class UserController {
@@ -58,7 +59,22 @@ export class UserController {
 
     return res.status(200).json({ msg: "Usuario autenticado", state: 'ok', data: req.user }) ;
   }
+  
+  @UseGuards(UserGuard)
+  @Post('check-password')
+  async checkPassword(@Req() req, @Body() checkPasswordDto: CheckPasswordDto, @Res() res: Response){
 
+    const userId: string = req.user.id
+    
+    const result: IGeneralReturn = await this.userService.checkPass(checkPasswordDto, userId)
+    
+    if(result.state === 'error' ){
+      return res.status(401).json(result)
+    }
+    
+    return res.status(200).json(result)
+
+  }
 
 
   

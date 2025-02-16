@@ -1,15 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { IGeneralReturn } from 'src/common/interfaces';
+import { Response } from 'express';
 
 @Controller('task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @Post()
-  create(@Body() createTaskDto: CreateTaskDto) {
-    return this.taskService.create(createTaskDto);
+  @Post('new-task/:projectId')
+  async create(@Param('projectId') projectId: string, @Body() createTaskDto: CreateTaskDto, @Res() res: Response) {
+
+    const result: IGeneralReturn = await this.taskService.create(createTaskDto, projectId);
+    if(result.state === 'error'){
+      return res.status(401).json(result)
+    }
+
+    return  res.status(201).json(result)
   }
 
   @Get()

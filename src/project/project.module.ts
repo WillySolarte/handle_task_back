@@ -9,7 +9,7 @@ import { Project, ProjectSchema } from './schema/project.schema';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Project.name, schema: ProjectSchema }]),
-    UserModule, // Asegúrate de importar UserModule
+    UserModule, 
   ],
   controllers: [ProjectController],
   providers: [ProjectService],

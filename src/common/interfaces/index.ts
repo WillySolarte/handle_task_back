@@ -14,3 +14,9 @@ export interface ILoginReturn {
     state: string,
     data: string
 }
+
+export interface IGeneralReturn {
+    msg: string
+    state: string,
+    data: string
+}

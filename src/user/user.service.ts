@@ -13,6 +13,7 @@ import { ISendEmail } from 'src/common/interfaces/sendMail';
 import { UserA } from './schema/userA.schema';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
+import { CheckPasswordDto } from './dto/check-pass.dto';
 //import {} from './templates'
 
 @Injectable()
@@ -101,6 +102,28 @@ export class UserService {
       email: user?.email
     }
     return result;
+
+  }
+
+  async checkPass({password}: CheckPasswordDto, id: string){
+    
+    try {
+      const user = await this.userAModel.findById(id)
+      
+      if(!user){
+        return { msg: 'No autorizado', state: 'error', data: '' };
+      }
+      const passwordValid = await bcrypt.compare(password, user.password);
+      
+      if(!passwordValid){
+        return { msg: 'No autorizado', state: 'error', data: '' };
+      }
+
+      return { msg: 'Usuario confirmado', state: 'ok', data: '' };
+    } catch (error) {
+      return { msg: 'Error en la base de datos', state: 'error', data: error };
+    }
+
 
   }
 
