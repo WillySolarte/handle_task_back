@@ -86,7 +86,6 @@ export class TaskService {
       const task = await this.taskBModel.findById(taskId);
       if (!task) return { msg: 'Tarea no encontrada ', state: 'error', data: null };
 
-      if(task.project !== project.id) return { msg: 'No autorizado ', state: 'error', data: null };
 
       task.status = status;
       task.completedBy.push({ user: new Types.ObjectId(userId), status: updateStatusTaskDto.status });
@@ -130,7 +129,22 @@ export class TaskService {
 
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  async remove(projectId: string, taskId: string, userId: string) {
+    try {
+      const project = await this.projectBModel.findById(projectId);
+      if (!project) return { msg: 'Proyecto no encontrado', state: 'error', data: '' };
+
+      if (project.manager.toString() !== userId) return { msg: 'No está autorizado', state: 'error', data: '' };
+
+      const task = await this.taskBModel.findById(taskId);
+      if (!task) return { msg: 'Tarea no encontrada', state: 'error', data: '' };
+
+      project.task = project.task.filter(currentTask => currentTask.toString() !== taskId.toString());
+      await Promise.allSettled([task.deleteOne(), project.save()]);
+
+      return { msg: 'Tarea eliminada correctamente', state: 'ok', data: null };
+    } catch (error) {
+      return { msg: 'Error en la conexión', state: 'error', data: '' };
+    }
   }
 }

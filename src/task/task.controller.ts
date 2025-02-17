@@ -67,9 +67,15 @@ export class TaskController {
 
     return res.status(200).json(result)
   }
+  @UseGuards(UserGuard)
+  @Delete('delete-task/:projectId/:taskId')
+  async remove(@Req() req, @Param('projectId') projectId: string, @Param('taskId') taskId: string, @Res() res: Response) {
+    
+    const userId = req.user.id;
+    const result = await this.taskService.remove(projectId, taskId, userId)
+    
+    if(result?.state === 'error') return  res.status(401).json(result)
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.taskService.remove(+id);
+      return res.status(200).json(result)
   }
 }

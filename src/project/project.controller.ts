@@ -67,4 +67,45 @@ export class ProjectController {
     const userId: string = req.user.id
     return this.projectService.remove(id, userId);
   }
+
+
+  @Post('find-member-by-email')
+  async findMemberByEmail(@Body('email') email: string, @Res() res: Response) {
+    
+    const result = await this.projectService.findMemberByEmail(email);
+    
+    if(result.state === 'error') return res.status(401).json(result.msg)
+      
+    return  res.status(200).json(result.data);
+  }
+
+  @Get('get-project-team/:projectId')
+  async getProjectTeam(@Param('projectId') projectId: string, @Res() res: Response) {
+
+    const result = await this.projectService.getProjectTeam(projectId);
+    
+    if(result.state === 'error') return res.status(401).json(result)
+
+      return  res.status(200).json(result);
+  }
+
+  @Post('add-member-by-id/:projectId')
+  async addMemberById(@Param('projectId') projectId: string, @Body('id') userId: string, @Res() res: Response) {
+    const result = await this.projectService.addMemberById(projectId, userId);
+    if(result.state === "error") return res.status(401).json(result.msg)
+    return res.status(200).json(result);
+
+  }
+  
+  @UseGuards(UserGuard)
+  @Delete('remove-member-by-id/:projectId/:userId')
+  async removeMemberById(@Req() req, @Param('projectId') projectId: string, @Param('userId') userId: string, @Res() res: Response) {
+    
+    const idUserActive = req.user.id
+    const result = await this.projectService.removeMemberById(projectId, userId, idUserActive);
+    
+    if(result.state === 'error') return res.status(401).json(result.msg)
+      
+    return res.status(200).json(result);
+  }
 }
