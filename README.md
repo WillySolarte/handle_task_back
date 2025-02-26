@@ -7,13 +7,12 @@ Pasos para levantar la app
 ```
 docker compose up -d
 ```
+2. Ejecutar el comando ```  docker build -t nest-app .  ``` para crear la imagen de node y su verisón
+3. Ejecutar el comando ```  docker container run -p 3000:3000 nest-app ``` para levantar el contenedor
+4. Crear una copia de el .env.example y renombrarlo a .env
+5. Ejecutar el comando ```npm install``` para reconstruir los módulos de node
+6. Ejecutar el comando ```npm run start:dev``` para ejecutar aplicación en desarrollo
 
-2. Crear una copia de el .env.example y renombrarlo a .env
-
-3. Ejecutar el comando ```npm install``` para reconstruir los módulos de node
-4. Ejecutar el comando ```npm run start:dev``` para ejecutar aplicación en desarrollo
-
-NOTA: Versión de node utilizada en el proyecto: v20.11.0
 
 
 # Prod
