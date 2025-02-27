@@ -84,7 +84,6 @@ export class ProjectService {
       if (error instanceof HttpException) {
         throw error;
       }
-      
       throw new InternalServerErrorException('Error en la conexión');
 
     }
