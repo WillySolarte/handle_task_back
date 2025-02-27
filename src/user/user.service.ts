@@ -14,6 +14,7 @@ import { UserA } from './schema/userA.schema';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CheckPasswordDto } from './dto/check-pass.dto';
+import { IUserActive } from 'src/common/interfaces';
 //import {} from './templates'
 
 @Injectable()
@@ -96,7 +97,7 @@ export class UserService {
   async findByEmail(email: string){
 
     const user = await this.userAModel.findOne({ email }) 
-    const result = {
+    const result : IUserActive = {
       name: user?.name,
       id: user?.id,
       email: user?.email

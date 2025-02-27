@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -28,22 +25,37 @@ export class ProjectService {
 
     try {
       await project.save();
-      return { msg: 'Proyecto creado ', state: 'ok', data: '' };
+      return 'Proyecto creado correctamente'
     } catch (error) {
 
-      return { msg: 'Error en la creación', state: 'error', data: error };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
   }
 
   async findAll(userId: string) {
     const objectId = new Types.ObjectId(userId);
-    const projects = await this.projectBModel.find({
-      $or: [
-        { manager: objectId },
-        { team: { $in: [userId] } },
-      ],
-    }).exec();
-    return projects
+
+    try {
+      const projects = await this.projectBModel.find({
+        $or: [
+          { manager: objectId },
+          { team: { $in: [userId] } },
+        ],
+      }).exec();
+      return projects
+      
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
+    }
+    
   }
 
   async findOne(id: string, userId: string) {
@@ -55,19 +67,26 @@ export class ProjectService {
       });
 
       if (!project) {
-        return { msg: 'Proyecto no encontrado', state: 'error', data: '' };
+        throw new NotFoundException('Proyecto no encontrado');
+
       }
       
       const isManager = project.manager.toString() === userId;
       const isTeamMember = project.team.some(member => member.toString() === userId);
 
       if (!isManager && !isTeamMember) {
-        return { msg: 'Acción no válida', state: 'error', data: '' };
+        throw new UnauthorizedException('Acción no válida');
+
       }
-      return { msg: 'Proyecto encontrado', state: 'ok', data: project };;
+      return project;
 
     } catch (error) {
-      return { msg: 'Error en la Conexión', state: 'error', data: error };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
+
     }
 
   }
@@ -81,11 +100,11 @@ export class ProjectService {
 
 
       if (!project) {
-        return { msg: 'Proyecto no encontrado', state: 'error', data: '' };
+        throw new NotFoundException('Proyecto no encontrado');
       }
 
       if (project.manager.toString() !== userId) {
-        return { msg: 'Operación no autorizada', state: 'error', data: '' };
+        throw new UnauthorizedException('Acción no válida');
       }
 
       project.projectName = updateProjectDto.projectName;
@@ -94,9 +113,14 @@ export class ProjectService {
 
 
       await project.save();
-      return { msg: 'Proyecto Actualizado', state: 'ok', data: '' };
+      
+      return 'Proyecto actualizado correctamente';
     } catch (error) {
-      return { msg: 'Error en la conexión', state: 'error', data: error };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
   }
 
@@ -115,9 +139,13 @@ export class ProjectService {
       await this.taskBModel.deleteMany({ _id: { $in: project.task } });
 
       await project.deleteOne();
-      return { message: 'Proyecto eliminado correctamente' };
+      return 'Proyecto eliminado correctamente';
     } catch (error) {
-      throw new Error('Error al consultar la BD: ' + error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
   }
 
@@ -125,80 +153,98 @@ export class ProjectService {
     try {
       const user = await this.userAModel.findOne({ email });
       
-      if (!user) return { msg: 'Usuario no encontrado', state: 'error', data: null };
+      if (!user){
+        throw new NotFoundException('Usuario no encontrado');
+      } 
 
       const objetOutput = {
-        _id: user.id,
+        _id: user.id as Types.ObjectId,
         email: user.email,
         name: user.name
       }
 
-      return { msg: 'Usuario ubicado', state: 'ok', data: objetOutput };
+      return objetOutput;
     } catch (error) {
-      return { msg: 'Error de conexión', state: 'error', data: '' }
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
   }
 
   async getProjectTeam(projectId: string) {
     try {
       const project = await this.projectBModel.findById(projectId).populate({ path: 'team', model: 'UserA', select: 'id name email' });
-      if (!project) return { msg: 'Proyecto no encontrado', state: 'error', data: null };
+      if (!project) throw new NotFoundException('Proyecto no encontrado');
       
-      return { msg: 'Consulta exitosa', state: 'ok', data: project.team };
+      return project.team;
 
     } catch (error) {
-      return { msg: 'Error de conexión', state: 'error', data: null };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
   }
 
   async addMemberById(projectId: string, userId: string) {
     try {
       const user = await this.userAModel.findById(userId);
-      if (!user) return { msg: 'Usuario no encontrado', state: 'error', data: null };
+      if (!user)  throw new NotFoundException('Usuario no encontrado');
 
       const project = await this.projectBModel.findById(projectId);
-      if (!project) {
-        return { msg: 'Proyecto no encontrado', state: 'error', data: null };
-      }
-
       
-      if (project.team.some(teamMember => teamMember.toString() === user.id.toString())) {
-        return { msg: 'El usuario ya existe', state: 'error', data: null };
+      if (!project) throw new NotFoundException('Proyecto no encontrado');
+      
+      
+      if (project.team.some(teamMember => teamMember.toString() === userId.toString())) {
+        
+        throw new BadRequestException('El usuario ya está agregado');
       }
 
       if(project.manager.toString() === userId){
-        return { msg: 'El usuario es manager', state: 'error', data: null };
+        throw new BadRequestException('El usuario es manager');
       }
 
-      project.team.push(user.id);
+      project.team.push(user.id as Types.ObjectId);
+      
       await project.save();
-      return { msg: 'Usuario agregado correctamente', state: 'ok', data: null };
+      return 'Usuario agregado correctamente'
     } catch (error) {
-      return { msg: 'Error de conexión', state: 'error', data: null };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
+
   }
 
   async removeMemberById(projectId: string, userId: string, idUserActive: string) {
     try {
       
       const project = await this.projectBModel.findById(projectId);
-      if (!project) {
-        return { msg: 'Proyecto no encontrado', state: 'error', data: null };
-      }
+      if (!project) throw new NotFoundException('Proyecto no encontrado');
       
       if (!project.team.some(teamMember => teamMember.toString() === userId)) {
-        return { msg: 'El usuario no existe en el proyecto', state: 'error', data: null };
+        throw new BadRequestException('El usuario no está agregado');
       }
 
       if(project.manager.toString() !== idUserActive){
-        return { msg: 'Solo el manager puede eliminar', state: 'error', data: null };
+        throw new UnauthorizedException('Solo el manager puede eliminar');
       }
 
       project.team = project.team.filter(teamMember => teamMember.toString() !== userId);
       await project.save();
-      return { msg: 'Usuario eliminado correctamente', state: 'ok', data: null };
+      return 'Usuario eliminado correctamente'
     } catch (error) {
-      return { msg: 'Error al consultar la BD', state: 'error', data: null };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new InternalServerErrorException('Error en la conexión');
     }
   }
 

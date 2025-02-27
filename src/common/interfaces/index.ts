@@ -28,3 +28,15 @@ export interface IGetTaskReturn {
     state: string,
     data: ITaskB | null
 }
+
+export interface IGetMemberByEmail {
+    _id: string,
+    email: string,
+    name: string
+}
+
+export interface IUserActive {
+    id?: string,
+    email?: string,
+    name?: string
+}
